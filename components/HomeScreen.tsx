@@ -62,7 +62,10 @@ const HomeScreen: React.FC = () => {
         </View>
 
         {/* Κουμπί Παραβλέψη */}
-        <TouchableOpacity style={styles.skipContainer}>
+        <TouchableOpacity
+          style={styles.skipContainer}
+          onPress={() => router.push("/menu" as RelativePathString)}
+        >
           <Text style={styles.skipText}>Παραβλέψη</Text>
         </TouchableOpacity>
       </View>
