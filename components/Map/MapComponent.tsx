@@ -1,5 +1,6 @@
+import { useGeocodeAddresses } from "@/hooks/useGeocodeAddresses";
 import React from "react";
-import { StyleSheet, Dimensions } from "react-native";
+import { StyleSheet, Dimensions, TouchableOpacity, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
 export type MarkerType = {
@@ -16,8 +17,9 @@ type MapComponentProps = {
   markers: MarkerType[];
 };
 
+
+
 const MapComponent: React.FC<MapComponentProps> = ({ markers }) => {
-  // Αν υπάρχουν markers, ορίζουμε ως αρχική περιοχή τα coordinates του πρώτου marker, αλλιώς χρησιμοποιούμε default τιμές.
   const initialRegion = {
     latitude: markers.length > 0 ? markers[0].coordinate.latitude : 37.9838,
     longitude: markers.length > 0 ? markers[0].coordinate.longitude : 23.7275,
@@ -27,21 +29,23 @@ const MapComponent: React.FC<MapComponentProps> = ({ markers }) => {
 
   return (
     <MapView style={styles.map} initialRegion={initialRegion}>
-      {markers.map((marker) => (
-        <Marker
-          key={marker.id}
-          coordinate={marker.coordinate}
-          title={marker.title}
-          description={marker.description}
-        />
-      ))}
+      {markers.map((marker) =>
+        marker.coordinate ? (
+          <Marker
+            key={marker.id}
+            coordinate={marker.coordinate}
+            title={marker.title}
+            description={marker.description}
+          />
+        ) : null
+      )}
     </MapView>
   );
 };
 
 const styles = StyleSheet.create({
   map: {
-    width: Dimensions.get("window").width - 40, // Λαμβάνει υπόψη το padding (π.χ. 20+20)
+    width: Dimensions.get("window").width - 40,
     height: 300,
     borderRadius: 8,
   },

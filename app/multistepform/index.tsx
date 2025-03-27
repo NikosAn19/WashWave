@@ -12,6 +12,9 @@ import {
 import { FontAwesome } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MapComponent, { MarkerType } from "@/components/Map/MapComponent";
+import { useGeocodeAddresses } from "@/hooks/useGeocodeAddresses";
+import Step3Schedule from "@/components/Step3Schedule";
+import SummaryComponent from "@/components/SummaryComponent";
 // Δείγμα δεδομένων για τύπους οχημάτων
 const vehicleTypes = [
   { id: 1, label: "Ι.Χ.", image: require("@/assets/formImages/carImg.png") },
@@ -84,8 +87,14 @@ type ServiceCardProps = {
   service: any;
   onSelect: () => void;
 };
+type SelectedService = {
+  title: string;
+  price: string;
+};
+
 // Component για κάθε service card
 const ServiceCard = ({ service, onSelect }: ServiceCardProps) => {
+  
   return (
     <View style={styles.serviceCard}>
       <Text style={styles.servicePrice}>{service.price}</Text>
@@ -99,32 +108,109 @@ const ServiceCard = ({ service, onSelect }: ServiceCardProps) => {
   );
 };
 
-// Δείγμα δεδομένων για markers
-const sampleMarkers: MarkerType[] = [
+export type AddressData = {
+  id: number;
+  title: string; // Η διεύθυνση ως κείμενο
+  description: string;
+  address: string;
+  
+};
+
+// Ορίζουμε τη λίστα διευθύνσεων στο parent
+const addressList: AddressData[] = [
   {
     id: 1,
-    title: "Διεύθυνση 1",
-    description: "Περιγραφή 1",
-    coordinate: { latitude: 37.9838, longitude: 23.7275 },
+    title: "Οδός Αριστοτέλους 10, Αθήνα, Ελλάδα",
+    description: "",
+    address: "Οδός Αριστοτέλους 10, Αθήνα, Ελλάδα",
+   
   },
   {
     id: 2,
-    title: "Διεύθυνση 2",
-    description: "Περιγραφή 2",
-    coordinate: { latitude: 37.9756, longitude: 23.7347 },
+    title: "Λεωφόρος Συγγρού 20, Αθήνα, Ελλάδα",
+    description: "",
+    address: "Λεωφόρος Συγγρού 20, Αθήνα, Ελλάδα",
+    
   },
   {
     id: 3,
-    title: "Διεύθυνση 3",
-    description: "Περιγραφή 3",
-    coordinate: { latitude: 37.99, longitude: 23.73 },
+    title: "Οδός Πανεπιστημίου 5, Αθήνα, Ελλάδα",
+    description: "",
+    address: "Οδός Πανεπιστημίου 5, Αθήνα, Ελλάδα",
+    
   },
+  // Προσθέστε όσες διευθύνσεις χρειάζεστε...
 ];
+
+type AddressCardProps = {
+  service: any;
+  onSelect: () => void;
+};
+
+const AddressCard: React.FC<AddressCardProps> = ({ service, onSelect }) => {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.title}>{service.title}</Text>
+      <Text style={styles.address}>{service.address}</Text>
+      <Text style={styles.description}>{service.description}</Text>
+      <TouchableOpacity style={styles.button} onPress={onSelect}>
+        <Text style={styles.buttonText}>Επιλογή</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const MultiStepFormScreen: React.FC = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<number | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedService, setSelectedService] = useState<SelectedService | null>(null);
+
+  const [schedule, setSchedule] = useState<{ date: string | null; time: string | null }>({
+    date: null,
+    time: null,
+  });
+  const handleScheduleChange = (date: string | null, time: string | null) => {
+    setSchedule({ date, time });
+  };
+
+  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+
+  const handleAddressSelect = (address: AddressData) => {
+    setSelectedAddress(address.address);
+    setCurrentStep((prev) => prev + 1);
+  };
+
+  
+
+   // Ορίζουμε τη λίστα διευθύνσεων στο parent
+   const addressList: AddressData[] = [
+    {
+      id: 1,
+      title: "Οδός Αριστοτέλους 10, Αθήνα, Ελλάδα",
+      description: "",
+      address: "Οδός Αριστοτέλους 10, Αθήνα, Ελλάδα",
+      
+    },
+    {
+      id: 2,
+      title: "Λεωφόρος Συγγρού 20, Αθήνα, Ελλάδα",
+      description: "",
+      address: "Λεωφόρος Συγγρού 20, Αθήνα, Ελλάδα",
+      
+    },
+    {
+      id: 3,
+      title: "Οδός Πανεπιστημίου 5, Αθήνα, Ελλάδα",
+      description: "",
+      address: "Οδός Πανεπιστημίου 5, Αθήνα, Ελλάδα",
+      
+    },
+    // Προσθέστε όσες διευθύνσεις χρειάζεστε...
+  ];
+
+  // Παίρνουμε τα markers μέσω του custom hook (η λίστα διευθύνσεων είναι lifted εδώ)
+  const markers: MarkerType[] = useGeocodeAddresses(addressList);
 
   // Όταν επιλέγεται μία κάρτα τύπου οχήματος
   const handleVehicleSelect = (id: number) => {
@@ -141,10 +227,15 @@ const MultiStepFormScreen: React.FC = () => {
   const handleOnSelect = () => {
     setCurrentStep(currentStep + 1);
   };
-  // Λειτουργία για μετάβαση στο επόμενο βήμα (π.χ. μετά την επιλογή κάποιας υπηρεσίας)
-  const handleNextStep = () => {
-    setCurrentStep((prev) => prev + 1);
+  const handleServiceSelect = (service: { title: string; price: string }) => {
+    setSelectedService({
+      title: service.title,
+      price: service.price,
+    });
+    setCurrentStep(prev => prev + 1);
   };
+
+  
 
   const insets = useSafeAreaInsets();
 
@@ -215,7 +306,7 @@ const MultiStepFormScreen: React.FC = () => {
                 <ServiceCard
                   key={service.id}
                   service={service}
-                  onSelect={handleOnSelect}
+                  onSelect={() => handleServiceSelect({ title: service.title, price: service.price })}
                 />
               ))}
             </View>
@@ -224,14 +315,35 @@ const MultiStepFormScreen: React.FC = () => {
       )}
       {/* Περιεχόμενο για το βήμα 2: Χάρτης */}
       {currentStep === 2 && (
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
         <View style={styles.mapContainer}>
           <Text style={styles.sectionHeader}>Επιλέξτε διεύθυνση</Text>
-          <MapComponent markers={sampleMarkers} />
-          {/* Μπορείς να προσθέσεις κουμπί για περαιτέρω βήμα αν θέλεις */}
-          <TouchableOpacity style={styles.nextButton} onPress={handleNextStep}>
-            <Text style={styles.nextButtonText}>Επόμενο</Text>
-          </TouchableOpacity>
+          <MapComponent markers={markers} />
+          <View style={styles.addressCardsContainer}>
+          {addressList.map((addr) => (
+                <AddressCard
+                  key={addr.id}
+                  service={addr}
+                  onSelect={() => handleAddressSelect(addr)}
+                />
+              ))}
+            </View>
         </View>
+        </ScrollView>
+      )}
+      {currentStep === 3 && (
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
+        <Step3Schedule onNextStep={handleOnSelect} onScheduleChange={handleScheduleChange}/>
+        </ScrollView>
+      )}
+      {currentStep === 4 && (
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
+         <SummaryComponent 
+          vehicle={vehicleTypes.find(v => v.id === selectedVehicle) || null}
+          service={selectedService} // selectedService είναι ένα state που θα έχεις αποθηκεύσει στο step 2
+          schedule={schedule} // selectedSchedule είναι ένα state με { date, time } από το step 3
+          address={selectedAddress}/>
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -241,6 +353,9 @@ const styles = StyleSheet.create({
   mapContainer: {
     marginTop: 30,
     alignItems: "center",
+  },
+  addressCardsContainer: {
+    marginTop: 20,
   },
   nextButton: {
     backgroundColor: "#00ADFE",
@@ -389,6 +504,44 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   selectButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  card: {
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+  },
+  address: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 5,
+  },
+  description: {
+    fontSize: 14,
+    color: "#777",
+    marginBottom: 10,
+  },
+  button: {
+    backgroundColor: "#00ADFE",
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  buttonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",

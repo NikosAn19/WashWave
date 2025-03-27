@@ -26,7 +26,8 @@ const MenuScreen: React.FC = () => {
             <FontAwesome name="angle-right" size={32} color="#00ADFE" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.card}>
+          <TouchableOpacity style={styles.card}
+          onPress={() => router.push("/services" as RelativePathString)}>
             <Text style={styles.cardText}>Δες τις υπηρεσίες</Text>
             <FontAwesome name="angle-right" size={32} color="#00ADFE" />
           </TouchableOpacity>
