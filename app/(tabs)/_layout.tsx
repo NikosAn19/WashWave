@@ -1,17 +1,22 @@
 import { Tabs } from "expo-router";
 import React from "react";
-import { Platform } from "react-native";
+import { Platform, View, StyleSheet } from "react-native";
 
 import { HapticTab } from "../../components/HapticTab";
 import { IconSymbol } from "../../components/ui/IconSymbol";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import HamburgerMenu from "@/components/HamburgerMenu";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
+    <View style={styles.container}>
+      {/* Hamburger Menu - θα εμφανίζεται πάνω σε όλες τις οθόνες */}
+      <HamburgerMenu />
+      
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
@@ -34,6 +39,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),
+          
         }}
       />
       <Tabs.Screen
@@ -46,5 +52,12 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

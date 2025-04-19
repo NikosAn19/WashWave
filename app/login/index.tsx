@@ -1,3 +1,4 @@
+import { RelativePathString, router } from "expo-router";
 import React, { useState } from "react";
 import {
   View,
@@ -7,14 +8,36 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
-  const handleLogin = (): void => {
-    console.log("Email:", email, "Password:", password);
+  const handleLogin = async (): Promise<void> => {
+    const payload = { email, password };
+    try {
+      const response = await fetch("http://192.168.9.240:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert("Επιτυχία", data.message || "Login successful.", [
+          {
+            text: "OK",
+            onPress: () => router.push("/menu"as RelativePathString),
+          },
+        ]);
+      } else {
+        Alert.alert("Σφάλμα", data.message || "Invalid credentials.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      Alert.alert("Σφάλμα", "An error occurred during login.");
+    }
   };
 
   return (

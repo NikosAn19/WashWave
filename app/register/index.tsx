@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigation } from "@react-navigation/native"; // Εισάγουμε το hook
 import {
   View,
   Text,
@@ -7,9 +8,13 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
+import { RelativePathString, useRouter } from "expo-router";
 
 const RegisterScreen: React.FC = () => {
+  const navigation = useNavigation<any>(); // Δημιουργούμε το navigation object
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
@@ -20,19 +25,56 @@ const RegisterScreen: React.FC = () => {
   const [postalCode, setPostalCode] = useState("");
   const [address, setAddress] = useState("");
 
-  const handleRegister = () => {
-    console.log("Registering with data:", {
+   const handleRegister = async () => {
+    const payload = {
       email,
       password,
-      phone,
-      lastName,
-      firstName,
-      nomos,
+      phone_number: phone,
+      last_name: lastName,
+      first_name: firstName,
+      state: nomos,
       city,
-      postalCode,
+      zip_code: postalCode,
       address,
-    });
+    };
+
+    try {
+      const response = await fetch("http://192.168.9.240:5000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        let message = data.message;
+        let verification_code = data.verification_code;
+        // Αν είναι development και έχουμε επιστρέψει verification_code, εμφάνισε το και στον χρήστη
+        // if (data.verification_code) {
+        //   message += `\nYour verification code is: ${data.verification_code}`;
+        //   verification_code = data.verification_code;
+        //   console.log("VERIFICATION CODE = ",verification_code);
+        // }
+        Alert.alert("Επιτυχής Εγγραφή", data.message, [
+          {
+            text: "OK",
+            onPress: () => {
+              router.push({ pathname: "VerificationScreen" as RelativePathString, params: { email,verification_code } });
+            },
+          },
+        ]);
+      } else {
+        Alert.alert("Σφάλμα Εγγραφής", data.message || "Παρουσιάστηκε κάποιο πρόβλημα.");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      Alert.alert("Σφάλμα", "Προέκυψε σφάλμα κατά την εγγραφή.");
+    }
   };
+
 
   return (
     <KeyboardAvoidingView
